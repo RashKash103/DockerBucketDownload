@@ -19,11 +19,13 @@ usage()
                 [ -h | --help ]
                 PROJECT URL
             Options:
-                -d | --do-not-delete-credentials        : If set, will not delete the credentials file from the docker image
+                -d | --do-not-delete-credentials        : If set, will not delete the credentials file
                 -k | --keep-gsutil                      : If set, will keep the gsutil installation directory
+                                                        : Note: If using this option, make sure to set the BOTO_PATH environment variable to the .boto file for authentication
                 -o | --overwrite                        : If set, will overwrite any files already existing in the Docker image
                 -l | --save-location PATH               : If set, will save the the downloaded folder/file from the storage bucket to PATH (default ./)
                 -t | --temporary-directory DIRECTORY    : If set, will override the default temporary directory to DIRECTORY (default ./temp)
+                                                        : Warning: Will clear everything in the temporary directory! (except for gsutil and .boto if --keep-gsutil is given)
                 -c | --credentials FILENAME             : If set, will override the path for the credentials file to FILENAME (default ./credentials.json)
                 -h | --help                             : Displays this help message
             Mandatory:
@@ -64,26 +66,40 @@ if [ ! -f "$CREDENTIALS" ]; then
     exit 2
 fi
 
+
+if [[ ! "$TEMPORARYDIRECTORY" = /* ]]; then
+    TEMPORARYDIRECTORY="`pwd`/$TEMPORARYDIRECTORY"
+fi
+
+if [[ ! "$SAVELOCATION" = /* ]]; then
+    SAVELOCATION="`pwd`/$SAVELOCATION"
+fi
+
+if [[ ! "$CREDENTIALS" = /* ]]; then
+    CREDENTIALS="`pwd`/$CREDENTIALS"
+fi
+
+
 mkdir -p $TEMPORARYDIRECTORY
 
 wget https://storage.googleapis.com/pub/gsutil.tar.gz -O "$TEMPORARYDIRECTORY/gsutil.tar.gz"
-tar xfz $TEMPORARYDIRECTORY/gsutil.tar.gz -C "./$TEMPORARYDIRECTORY/"
+tar xfz $TEMPORARYDIRECTORY/gsutil.tar.gz -C "$TEMPORARYDIRECTORY/"
 
 echo -e "\n\n"
 
 chmod 666 $CREDENTIALS
-echo -e "`pwd`/$CREDENTIALS\nN\n$1" | "./$TEMPORARYDIRECTORY/gsutil/gsutil" config -e -o "`pwd`/$TEMPORARYDIRECTORY/.boto"
-export BOTO_PATH="`pwd`/$TEMPORARYDIRECTORY/.boto"
+echo -e "$CREDENTIALS\nN\n$1" | "$TEMPORARYDIRECTORY/gsutil/gsutil" config -e -o "$TEMPORARYDIRECTORY/.boto"
+export BOTO_PATH="$TEMPORARYDIRECTORY/.boto"
 
 echo -e "\n\n"
 
 mkdir $TEMPORARYDIRECTORY/download
-"./$TEMPORARYDIRECTORY/gsutil/gsutil" cp -r $2 "./$TEMPORARYDIRECTORY/download"
+"$TEMPORARYDIRECTORY/gsutil/gsutil" cp -r $2 "./$TEMPORARYDIRECTORY/download"
 
 if [ "$OVERWRITE" = true ] ; then
-    cp -RT "./$TEMPORARYDIRECTORY/download" "$SAVELOCATION"
+    cp -RT "$TEMPORARYDIRECTORY/download" "$SAVELOCATION"
 else
-    cp -RTn "./$TEMPORARYDIRECTORY/download" "$SAVELOCATION"
+    cp -RTn "$TEMPORARYDIRECTORY/download" "$SAVELOCATION"
 fi
 
 if [ "$DELETECREDENTIALS" = true ] ; then
@@ -91,9 +107,9 @@ if [ "$DELETECREDENTIALS" = true ] ; then
 fi
 
 if [ "$KEEPGSUTIL" = true ] ; then
-    rm -rf "./$TEMPORARYDIRECTORY/!(gsutil|.boto)"
+    rm -rf "$TEMPORARYDIRECTORY/!(gsutil|.boto)"
 else
-    rm -rf "./$TEMPORARYDIRECTORY"
+    rm -rf "$TEMPORARYDIRECTORY"
 fi
 
 rm $0
