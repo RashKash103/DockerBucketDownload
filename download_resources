@@ -94,7 +94,7 @@ export BOTO_PATH="$TEMPORARYDIRECTORY/.boto"
 echo -e "\n\n"
 
 mkdir $TEMPORARYDIRECTORY/download
-"$TEMPORARYDIRECTORY/gsutil/gsutil" cp -r $2 "./$TEMPORARYDIRECTORY/download"
+"$TEMPORARYDIRECTORY/gsutil/gsutil" cp -r $2 "$TEMPORARYDIRECTORY/download"
 
 if [ "$OVERWRITE" = true ] ; then
     cp -RT "$TEMPORARYDIRECTORY/download" "$SAVELOCATION"
