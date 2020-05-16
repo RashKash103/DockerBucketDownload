@@ -58,7 +58,7 @@ Usage:  download_resources
 COPY credentials.json /root/
 COPY download_resources /root/
 
-RUN /root/download_resource cloudProject gs://bucket/folder/
+RUN /root/download_resource cloudProject gs://bucket/folder/*
 `````
 
 ## License
