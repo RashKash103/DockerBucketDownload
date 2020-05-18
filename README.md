@@ -54,12 +54,32 @@ Usage:  download_resources
 
 ### In a Dockerfile
 
+WIth a downloaded version
+
 ```Dockerfile
 COPY credentials.json /root/
 COPY download_resources /root/
 
 RUN /root/download_resource cloudProject gs://bucket/folder/*
 `````
+
+Directly from GitHub (you must have `git` installed on the image prior to cloning the repo)
+
+```Dockerfile
+COPY credentials.json /root/
+
+# Saves the branch version information so Docker does not cache an old version of the script
+ADD https://api.github.com/repos/RashKash103/DockerBucketDownload/git/refs/heads/master version.json
+RUN git clone https://github.com/RashKash103/DockerBucketDownload.git
+
+RUN DockerBucketDownload/download_resources -oc /root/credentials.json cloudProject gs://bucket/folder/*
+
+# Clears the added files/folders
+RUN rm -rf DockerBucketDownload
+RUN rm version.json
+```
+
+Note: Due to how `gsutil cp` works, you cannot specify a folder as `gs://bucket/folder/`. This will cause `gsutil` not to download from the bucket. Instead, you must use `gs://bucket/folder` to download an entire folder. To download contents of a folder, you can use `gs://bucket/folder/*`.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
