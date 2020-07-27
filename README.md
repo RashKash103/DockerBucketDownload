@@ -60,7 +60,7 @@ WIth a downloaded version
 COPY credentials.json /root/
 COPY download_resources /root/
 
-RUN /root/download_resource cloudProject gs://bucket/folder/*
+RUN /root/download_resources cloudProject gs://bucket/folder/*
 `````
 
 Directly from GitHub (you must have `git` installed on the image prior to cloning the repo)
